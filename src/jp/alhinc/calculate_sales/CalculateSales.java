@@ -46,7 +46,8 @@ public class CalculateSales {
 		//2-1の処理(ファイルの取得・ファイル名が数字8桁.rcdの判定と検索・該当ファイルの情報を保持)
 		//listFilesを使⽤してfilesという配列に、
 		//指定したパスに存在する全てのファイル(または、ディレクトリ)の情報を格納します。
-		File[] files = new File("C:/Users/user/Desktop/売り上げ集計課題").listFiles();
+		//File[] files = new File("C:/Users/user/Desktop/売り上げ集計課題").listFiles();
+		File[] files = new File(args[0]).listFiles(); //レビュー後修正
 		// 売上ファイルの情報を格納するリスト
 		List<File> rcdFiles = new ArrayList<>();
 
@@ -67,35 +68,51 @@ public class CalculateSales {
 
 			//2-2の処理
 			// 売上ファイルの中身を保持するリストを作成(1行ずつ中身を見ていく処理)
-			List<long[]> salesDataList = new ArrayList<>();
+			//List<long[]> salesDataList = new ArrayList<>();
+			BufferedReader br = null;
+			try {
+				for (int i = 0; i < rcdFiles.size(); i++) {
+					//行単位で見ていくため、BufferedReaderメソッドを使用する
+					br = new BufferedReader(new FileReader(rcdFiles.get(i)));
 
-			for (int i = 0; i < rcdFiles.size(); i++) {
-				//行単位で見ていくため、BufferedReaderメソッドを使用する
-				BufferedReader br = new BufferedReader(new FileReader(rcdFiles.get(i)));
+					//パラメータの取得
+					String branchCode = br.readLine(); // 1行目: 支店コード
+					String saleAmounts = br.readLine(); // 2行目: 売上金額
 
-				//パラメータの取得
-				String branchCode = br.readLine(); // 1行目: 支店コード
-				String saleAmounts = br.readLine(); // 2行目: 売上金額
+					//読み込み処理を閉じる
+					//br.close();
 
-				//読み込み処理を閉じる
-				br.close();
+					//売上金額をlong型に変換
+					long fileSale = Long.parseLong(saleAmounts);
+					// 新しいListに追加
+					//salesDataList.add(new long[] { Long.parseLong(branchCode), fileSale });
 
-				//売上金額をlong型に変換
-				long fileSale = Long.parseLong(saleAmounts);
-				// 新しいListに追加
-				salesDataList.add(new long[] { Long.parseLong(branchCode), fileSale });
+					//読み込んだ売上⾦額を加算します。
+					//Long saleAmount = 売上⾦額を⼊れたMap.get(⽀店コード) + longに変換した売上⾦額;
+					// 既存の売上金額に新しく読み込んだ売上金額を加算
+					Long saleAmount = branchSales.get(branchCode);
+					//Mapに支店コードが存在しない場合、saleAmountを0L（long型の0）に設定
+                    //if (saleAmount == null) {
+                           // saleAmount = 0L;
+                    //}
 
-				//読み込んだ売上⾦額を加算します。
-				//Long saleAmount = 売上⾦額を⼊れたMap.get(⽀店コード) + longに変換した売上⾦額;
-				// 既存の売上金額に新しく読み込んだ売上金額を加算
-				Long saleAmount = branchSales.get(branchCode);
-
-				//Mapに支店コードが存在しない場合、saleAmountを0L（long型の0）に設定
-				if (saleAmount == null) {
-					saleAmount = 0L;
+					//加算した売上⾦額をMapに追加します。
+					branchSales.put(branchCode, saleAmount + fileSale);
 				}
-				//加算した売上⾦額をMapに追加します。
-				branchSales.put(branchCode, saleAmount + fileSale);
+			} catch (IOException e) {
+				System.out.println(UNKNOWN_ERROR);
+				return;
+			} finally {
+				// ファイルを開いている場合
+				if (br != null) {
+					try {
+						// ファイルを閉じる
+						br.close();
+					} catch (IOException e) {
+						System.out.println(UNKNOWN_ERROR);
+						return;
+					}
+				}
 			}
 		}
 
@@ -138,12 +155,14 @@ public class CalculateSales {
 				String[] items = line.split(",");
 				// 少なくとも支店コードと支店名2つの要素があるか確認
 				if (items.length >= 2) {
-					String branchCode = items[0];
-					String branchName = items[1];
+					//String branchCode = items[0];
+					//String branchName = items[1];
 					// 支店コードをキー、支店名を値としてbranchNamesMapに格納
-					branchNames.put(branchCode, branchName);
+					//branchNames.put(branchCode, branchName);
+					branchNames.put(items[0], items[1]);
 					//支店コードをキー、初期値として0L（Long型の0）を値としてbranchSalesMapに格納
-					branchSales.put(branchCode, 0L); // 売上金額を初期化
+					//branchSales.put(branchCode, 0L);
+					branchSales.put(items[0], 0L); // 売上金額を初期化
 
 				}
 			}
@@ -184,26 +203,31 @@ public class CalculateSales {
 			bw = new BufferedWriter(new FileWriter(path + File.separator + fileName));
 
 			// Mapから全てのKey(支店コード)を取得
-			for (String key : branchNames.keySet()) {
+			//for (String key : branchNames.keySet()) {
 				//keyという変数には、Mapから取得したキーが代入されています。
 				//拡張for⽂で繰り返されているので、1つ⽬のキーが取得できたら、
 				//2つ⽬の取得...といったように、次々とkeyという変数に上書きされていきます。
 				//支店コードと支店名を保持するMapのキー
-				String branchNameKey = branchNames.get(key);
+				//String branchNameKey = branchNames.get(key);
 				//支店コードと売上金額を保持するMapのキー
-				Long branchSalesKey = branchSales.get(key);
+				//Long branchSalesKey = branchSales.get(key);
 
 				// ファイルに書き込む文字列を作成（支店コード・支店名・合計金額）
 				//"%03d,%s,%010d"の使い方
 				//%03d：3桁固定のその数字の前に0をつける
 				//%s：文字列そのまま出力
 				//%010d：整数を10進法で出力
-				String line = String.format("%03d,%s,%010d", Integer.parseInt(key), branchNameKey, branchSalesKey);
+				//String line = String.format("%03d,%s,%010d", Integer.parseInt(key), branchNameKey, branchSalesKey);
 
-				bw.write(line);
+				//bw.write(line);
 				// 改行
-				bw.newLine();
-			}
+				//bw.newLine();
+			//}
+			//レビュー後修正
+			 for(String key : branchNames.keySet()) {
+                 bw.write(key + "," + branchNames.get(key) + "," + branchSales.get(key));
+                 bw.newLine();
+         }
 			//ファイル書き込みでの例外処理
 		} catch (IOException e) {
 			System.out.println(UNKNOWN_ERROR);
