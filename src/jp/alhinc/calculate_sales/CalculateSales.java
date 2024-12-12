@@ -65,15 +65,15 @@ public class CalculateSales {
 				// ファイル名を取得
 				String fileName = files[i].getName();
 
-				// matchesを使用してファイル名が「数字8桁.rcd」なのか判定します。
+				//対象がファイルであり、「数字8桁.rcd」なのか判定します。
 				//エラー処理3の内容
 				if (files[i].isFile() && fileName.matches("\\d{8}\\.rcd")) {
+					// 売上ファイルの条件に当てはまったものだけ、List(ArrayList) に追加します。
+					rcdFiles.add(files[i]);
+				} else {
 					System.out.println(UNKNOWN_ERROR);
 					return;
 				}
-
-				// 売上ファイルの条件に当てはまったものだけ、List(ArrayList) に追加します。
-				rcdFiles.add(files[i]);
 			}
 		}
 		//エラー処理2-1の内容
