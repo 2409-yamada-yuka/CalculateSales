@@ -70,9 +70,6 @@ public class CalculateSales {
 				if (files[i].isFile() && fileName.matches("\\d{8}\\.rcd")) {
 					// 売上ファイルの条件に当てはまったものだけ、List(ArrayList) に追加します。
 					rcdFiles.add(files[i]);
-				} else {
-					System.out.println(UNKNOWN_ERROR);
-					return;
 				}
 			}
 		}
