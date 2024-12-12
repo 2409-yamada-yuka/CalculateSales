@@ -24,6 +24,8 @@ public class CalculateSales {
 	private static final String UNKNOWN_ERROR = "予期せぬエラーが発生しました";
 	private static final String FILE_NOT_EXIST = "支店定義ファイルが存在しません";
 	private static final String FILE_INVALID_FORMAT = "支店定義ファイルのフォーマットが不正です";
+	private static final String FILE_NOT_SEQUENTIAL = "売上ファイル名が連番になっていません";
+	private static final String EXCEEDS_DIGIT_LIMIT = "合計金額が10桁を超えました";
 
 	/**
 	 * メインメソッド
@@ -35,7 +37,7 @@ public class CalculateSales {
 		//エラー処理3の内容
 		//コマンドライン引数が1つ設定されていなかった場合
 		if (args.length != 1) {
-			System.out.println("予期せぬエラーが発生しました");
+			System.out.println(UNKNOWN_ERROR);
 		}
 
 		// 支店コードと支店名を保持するMap
@@ -66,7 +68,8 @@ public class CalculateSales {
 				// matchesを使用してファイル名が「数字8桁.rcd」なのか判定します。
 				//エラー処理3の内容
 				if (files[i].isFile() && fileName.matches("\\d{8}\\.rcd")) {
-					System.out.println("予期せぬエラーが発生しました");
+					System.out.println(UNKNOWN_ERROR);
+					return;
 				}
 
 				// 売上ファイルの条件に当てはまったものだけ、List(ArrayList) に追加します。
@@ -85,7 +88,7 @@ public class CalculateSales {
 
 			//2つのファイル名の数字を⽐較して、差が1ではなかった場合
 			if ((latter - former) != 1) {
-				System.out.println("売上ファイル名が連番になっていません");
+				System.out.println(FILE_NOT_SEQUENTIAL);
 				return;
 			}
 		}
@@ -114,12 +117,6 @@ public class CalculateSales {
 				String branchCode = br.readLine(); // 1行目: 支店コード
 				String saleAmounts = br.readLine(); // 2行目: 売上金額
 
-				//エラー処理3の内容
-				// 売上金額が数字であるかの確認
-				if (!saleAmounts.matches("\\d+")) {
-					System.out.println("予期せぬエラーが発生しました");
-				}
-
 				//Mapに特定のKeyが存在するか確認する
 				//支店コードの有効性をチェック
 				if (!branchSales.containsKey(branchCode)) {
@@ -127,20 +124,26 @@ public class CalculateSales {
 					return;
 				}
 
+				//エラー処理3の内容
+				// 売上金額が数字であるかの確認
+				if (!saleAmounts.matches("\\d+")) {
+					System.out.println(UNKNOWN_ERROR);
+					return;
+				}
 				//売上金額をlong型に変換
 				long fileSale = Long.parseLong(saleAmounts);
 
 				// 既存の売上金額に新しく読み込んだ売上金額を加算
-				Long saleAmount = branchSales.get(branchCode);
+				Long saleAmount = fileSale + branchSales.get(branchCode);
 
 				// 加算した売上金額をMapに追加する前にチェック
-				if (saleAmount + fileSale >= 10000000000L) {
-					System.out.println("合計金額が10桁を超えました");
+				if (saleAmount >= 10000000000L) {
+					System.out.println(EXCEEDS_DIGIT_LIMIT);
 					return;
 				}
 
 				//加算した売上⾦額をMapに追加します。
-				branchSales.put(branchCode, saleAmount + fileSale);
+				branchSales.put(branchCode, saleAmount);
 			}
 		} catch (IOException e) {
 			System.out.println(UNKNOWN_ERROR);
