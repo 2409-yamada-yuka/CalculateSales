@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,9 +45,7 @@ public class CalculateSales {
 		// ※ここから集計処理を作成してください。(処理内容2-1、2-2)
 
 		//2-1の処理(ファイルの取得・ファイル名が数字8桁.rcdの判定と検索・該当ファイルの情報を保持)
-		//listFilesを使⽤してfilesという配列に、
-		//指定したパスに存在する全てのファイル(または、ディレクトリ)の情報を格納します。
-		//File[] files = new File("C:/Users/user/Desktop/売り上げ集計課題").listFiles();
+
 		File[] files = new File(args[0]).listFiles(); //レビュー後修正
 		// 売上ファイルの情報を格納するリスト
 		List<File> rcdFiles = new ArrayList<>();
@@ -65,10 +64,25 @@ public class CalculateSales {
 					rcdFiles.add(files[i]);
 				}
 			}
+			//エラー処理2-1の内容
+			//rcdFilesをソートする
+			Collections.sort(rcdFiles);
+
+			// 売上ファイルが連番か確認
+			for (int i = 0; i < rcdFiles.size() - 1; i++) {
+				//⽐較する2つのファイル名の先頭から数字の8⽂字を切り出し、int型に変換します。
+				int former = Integer.parseInt(rcdFiles.get(i).getName().substring(0, 8));
+				int latter = Integer.parseInt(rcdFiles.get(i + 1).getName().substring(0, 8));
+
+				//2つのファイル名の数字を⽐較して、差が1ではなかった場合
+				if ((latter - former) != 1) {
+					System.out.println("売上ファイル名が連番になっていません");
+					return;
+				}
+			}
 
 			//2-2の処理
-			// 売上ファイルの中身を保持するリストを作成(1行ずつ中身を見ていく処理)
-			//List<long[]> salesDataList = new ArrayList<>();
+			//1行ずつ中身を見ていく処理
 			BufferedReader br = null;
 			try {
 				for (int i = 0; i < rcdFiles.size(); i++) {
@@ -79,22 +93,11 @@ public class CalculateSales {
 					String branchCode = br.readLine(); // 1行目: 支店コード
 					String saleAmounts = br.readLine(); // 2行目: 売上金額
 
-					//読み込み処理を閉じる
-					//br.close();
-
 					//売上金額をlong型に変換
 					long fileSale = Long.parseLong(saleAmounts);
-					// 新しいListに追加
-					//salesDataList.add(new long[] { Long.parseLong(branchCode), fileSale });
 
-					//読み込んだ売上⾦額を加算します。
-					//Long saleAmount = 売上⾦額を⼊れたMap.get(⽀店コード) + longに変換した売上⾦額;
 					// 既存の売上金額に新しく読み込んだ売上金額を加算
 					Long saleAmount = branchSales.get(branchCode);
-					//Mapに支店コードが存在しない場合、saleAmountを0L（long型の0）に設定
-                    //if (saleAmount == null) {
-                           // saleAmount = 0L;
-                    //}
 
 					//加算した売上⾦額をMapに追加します。
 					branchSales.put(branchCode, saleAmount + fileSale);
@@ -138,6 +141,12 @@ public class CalculateSales {
 
 		try {
 			File file = new File(path, fileName);
+			//エラー処理1の内容
+			if (!file.exists()) {
+				//支店定義ファイルが存在しない場合、コンソールにエラーメッセージを表示します。
+				System.out.println(FILE_NOT_EXIST);
+				return false;
+			}
 			FileReader fr = new FileReader(file);
 			br = new BufferedReader(fr);
 
@@ -145,26 +154,24 @@ public class CalculateSales {
 
 			// 一行ずつ読み込む
 			while ((line = br.readLine()) != null) {
-				//元の処理
-				//System.out.println(line);
-
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
 
-				//split を使って「,」(カンマ)で分割すると、
-				//items[0] には支店コード、items[1] には支店名が格納されます。
+				//split を使って、items[0] には支店コード、items[1] には支店名を格納
 				String[] items = line.split(",");
-				// 少なくとも支店コードと支店名2つの要素があるか確認
-				if (items.length >= 2) {
-					//String branchCode = items[0];
-					//String branchName = items[1];
-					// 支店コードをキー、支店名を値としてbranchNamesMapに格納
-					//branchNames.put(branchCode, branchName);
-					branchNames.put(items[0], items[1]);
-					//支店コードをキー、初期値として0L（Long型の0）を値としてbranchSalesMapに格納
-					//branchSales.put(branchCode, 0L);
-					branchSales.put(items[0], 0L); // 売上金額を初期化
 
+				//エラー処理1の内容
+				// 少なくとも支店コードと支店名2つの要素があるか確認
+				//⽀店定義ファイルの仕様が満たされていない場合
+				if (items.length != 2 || !items[0].matches("\\d{3}")) {
+					System.out.println(FILE_INVALID_FORMAT);
+					return false;
 				}
+				// 支店コードをキー、支店名を値としてbranchNamesMapに格納
+				branchNames.put(items[0], items[1]);
+				//支店コードをキー、初期値として0L（Long型の0）を値としてbranchSalesMapに格納
+				branchSales.put(items[0], 0L); // 売上金額を初期化
+
+				//}
 			}
 		} catch (IOException e) {
 			System.out.println(UNKNOWN_ERROR);
@@ -203,31 +210,12 @@ public class CalculateSales {
 			bw = new BufferedWriter(new FileWriter(path + File.separator + fileName));
 
 			// Mapから全てのKey(支店コード)を取得
-			//for (String key : branchNames.keySet()) {
-				//keyという変数には、Mapから取得したキーが代入されています。
-				//拡張for⽂で繰り返されているので、1つ⽬のキーが取得できたら、
-				//2つ⽬の取得...といったように、次々とkeyという変数に上書きされていきます。
-				//支店コードと支店名を保持するMapのキー
-				//String branchNameKey = branchNames.get(key);
-				//支店コードと売上金額を保持するMapのキー
-				//Long branchSalesKey = branchSales.get(key);
-
+			for (String key : branchNames.keySet()) {
 				// ファイルに書き込む文字列を作成（支店コード・支店名・合計金額）
-				//"%03d,%s,%010d"の使い方
-				//%03d：3桁固定のその数字の前に0をつける
-				//%s：文字列そのまま出力
-				//%010d：整数を10進法で出力
-				//String line = String.format("%03d,%s,%010d", Integer.parseInt(key), branchNameKey, branchSalesKey);
-
-				//bw.write(line);
-				// 改行
-				//bw.newLine();
-			//}
-			//レビュー後修正
-			 for(String key : branchNames.keySet()) {
-                 bw.write(key + "," + branchNames.get(key) + "," + branchSales.get(key));
-                 bw.newLine();
-         }
+				bw.write(key + "," + branchNames.get(key) + "," + branchSales.get(key));
+				//改行
+				bw.newLine();
+			}
 			//ファイル書き込みでの例外処理
 		} catch (IOException e) {
 			System.out.println(UNKNOWN_ERROR);
