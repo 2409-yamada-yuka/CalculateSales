@@ -190,9 +190,9 @@ public class CalculateSales {
 		}
 		//04_商品定義の追加の内容
 		//商品定義ファイル書き込み処理
-		if (!writeFile(args[0], FILE_NAME_COMMODITY_OUT, commodityNames, commoditySales)) {
-			return;
-		}
+		//if (!writeFile(args[0], FILE_NAME_COMMODITY_OUT, commodityNames, commoditySales)) {
+		//return;
+		//}
 	}
 
 	/**
@@ -209,20 +209,13 @@ public class CalculateSales {
 			Map<String, Long> commonSales) {
 
 		//引数から見に行くファイルを指定
-		String fileType;
-		if (FILE_NAME_BRANCH_LST.equals(fileName)) { //branch.lstの場合
-			fileType = "branch.lst";
-		} else if (FILE_NAME_COMMODITY_LST.equals(fileName)) { //commodity.lstの場合
-			fileType = "commodity.lst";
-		} else {
-			return false;
-		}
+
 		BufferedReader br = null;
 
 		try {
 			File file = new File(path, fileName);
 			//エラー処理1の内容
-			//支店定義ファイルが存在しない場合
+			//指定された定義ファイルが存在しない場合
 			if (!file.exists()) {
 				System.out.println(FILE_NOT_EXIST);
 				return false;
@@ -237,22 +230,22 @@ public class CalculateSales {
 			while ((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
 
-				//split を使って、items[0] には支店コード、items[1] には支店名を格納
+				//split を使って、items[0] にはコード、items[1] には名前を格納
 				String[] items = line.split(",");
 
 				//エラー処理1の内容
-				// 少なくとも支店コードと支店名2つの要素があるか確認
-				//⽀店定義ファイルの仕様が満たされていない場合
-				if (items.length != 2 || !items[0].matches("\\d{3}")) {
+				// 少なくともコードと名前2つの要素があるか確認
+				//定義ファイルの仕様が満たされていない場合
+				//if (items.length != 2 || !items[0].matches("\\d{3}")) {
+				if (items.length != 2 || !items[0].matches("^[0-9]{3}$")) {
+
 					System.out.println(FILE_INVALID_FORMAT);
 
 				}
 
-				// 支店コードをキー、支店名を値としてbranchNamesMapに格納
-				//branchNames.put(items[0], items[1]);
+				// コードをキー、名前を値としてcommonNamesMapに格納
 				commonNames.put(items[0], items[1]);
-				//支店コードをキー、初期値として0L（Long型の0）を値としてbranchSalesMapに格納
-				//branchSales.put(items[0], 0L); // 売上金額を初期化
+				//コードをキー、初期値として0L（Long型の0）を値としてcommonSalesMapに格納
 				commonSales.put(items[0], 0L); // 売上金額を初期化
 
 			}
