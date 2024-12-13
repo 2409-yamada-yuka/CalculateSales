@@ -20,6 +20,13 @@ public class CalculateSales {
 	// 支店別集計ファイル名
 	private static final String FILE_NAME_BRANCH_OUT = "branch.out";
 
+	//04_商品定義の追加の内容
+	//商品定義ファイル名
+	private static final String FILE_NAME_COMMODITY_LST = "commodity.lst";
+
+	//商品別集計ファイル
+	private static final String FILE_NAME_COMMODITY_OUT = "commodity.out";
+
 	// エラーメッセージ
 	private static final String UNKNOWN_ERROR = "予期せぬエラーが発生しました";
 	private static final String FILE_NOT_EXIST = "支店定義ファイルが存在しません";
@@ -45,8 +52,22 @@ public class CalculateSales {
 		// 支店コードと売上金額を保持するMap
 		Map<String, Long> branchSales = new HashMap<>();
 
+		//04_商品定義の追加の内容
+		//商品コードと商品名を保持するMap
+		Map<String, String> commodityNames = new HashMap<>();
+
+		//商品コードと合計金額を保持するMap
+		Map<String, Long> commoditySales = new HashMap<>();
+
 		// 支店定義ファイル読み込み処理
 		if (!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
+			return;
+		}
+
+		//04_商品定義の追加の内容
+		//処理内容1-3
+		//商品定義ファイル読み込み処理
+		if (!readFile(args[0], FILE_NAME_COMMODITY_LST, commodityNames, commoditySales)) {
 			return;
 		}
 
@@ -112,7 +133,9 @@ public class CalculateSales {
 
 				//パラメータの取得
 				String branchCode = br.readLine(); // 1行目: 支店コード
-				String saleAmounts = br.readLine(); // 2行目: 売上金額
+				//04_商品定義の追加の内容
+				String commodityCode = br.readLine(); // 2行目: 商品コード
+				String saleAmounts = br.readLine(); // 3行目: 売上金額
 
 				//Mapに特定のKeyが存在するか確認する
 				//支店コードの有効性をチェック
@@ -132,15 +155,18 @@ public class CalculateSales {
 
 				// 既存の売上金額に新しく読み込んだ売上金額を加算
 				Long saleAmount = fileSale + branchSales.get(branchCode);
+				Long commoditySaleAmount = fileSale + commoditySales.get(commodityCode);
 
 				// 加算した売上金額をMapに追加する前にチェック
-				if (saleAmount >= 10000000000L) {
+				if (saleAmount >= 10000000000L || commoditySaleAmount >= 10000000000L) {
 					System.out.println(EXCEEDS_DIGIT_LIMIT);
 					return;
 				}
 
 				//加算した売上⾦額をMapに追加します。
 				branchSales.put(branchCode, saleAmount);
+				//04_商品定義の追加の内容
+				commoditySales.put(commodityCode, saleAmount);
 			}
 		} catch (IOException e) {
 			System.out.println(UNKNOWN_ERROR);
@@ -162,20 +188,35 @@ public class CalculateSales {
 		if (!writeFile(args[0], FILE_NAME_BRANCH_OUT, branchNames, branchSales)) {
 			return;
 		}
-
+		//04_商品定義の追加の内容
+		//商品定義ファイル書き込み処理
+		if (!writeFile(args[0], FILE_NAME_COMMODITY_OUT, commodityNames, commoditySales)) {
+			return;
+		}
 	}
 
 	/**
-	 * 支店定義ファイル読み込み処理
+	 * 04_商品定義の追加の内容
+	 * 支店定義ファイル・商品定義ファイル読み込み処理
 	 *
 	 * @param フォルダパス
-	 * @param ファイル名
-	 * @param 支店コードと支店名を保持するMap
-	 * @param 支店コードと売上金額を保持するMap
+	 * @param ファイル名（支店定義・商品定義）
+	 * @param コードと名前を保持するMap
+	 * @param コードと金額を保持するMap
 	 * @return 読み込み可否
 	 */
-	private static boolean readFile(String path, String fileName, Map<String, String> branchNames,
-			Map<String, Long> branchSales) {
+	private static boolean readFile(String path, String fileName, Map<String, String> commonNames,
+			Map<String, Long> commonSales) {
+
+		//引数から見に行くファイルを指定
+		String fileType;
+		if (FILE_NAME_BRANCH_LST.equals(fileName)) { //branch.lstの場合
+			fileType = "branch.lst";
+		} else if (FILE_NAME_COMMODITY_LST.equals(fileName)) { //commodity.lstの場合
+			fileType = "commodity.lst";
+		} else {
+			return false;
+		}
 		BufferedReader br = null;
 
 		try {
@@ -208,11 +249,12 @@ public class CalculateSales {
 				}
 
 				// 支店コードをキー、支店名を値としてbranchNamesMapに格納
-				branchNames.put(items[0], items[1]);
+				//branchNames.put(items[0], items[1]);
+				commonNames.put(items[0], items[1]);
 				//支店コードをキー、初期値として0L（Long型の0）を値としてbranchSalesMapに格納
-				branchSales.put(items[0], 0L); // 売上金額を初期化
+				//branchSales.put(items[0], 0L); // 売上金額を初期化
+				commonSales.put(items[0], 0L); // 売上金額を初期化
 
-				//}
 			}
 		} catch (IOException e) {
 			System.out.println(UNKNOWN_ERROR);
@@ -233,17 +275,17 @@ public class CalculateSales {
 	}
 
 	/**
-	 * 支店別集計ファイル書き込み処理
+	 * 04_商品定義の追加の内容
+	 * 支店定義ファイル・商品定義ファイル書き込み処理
 	 *
 	 * @param フォルダパス
 	 * @param ファイル名
-	 * @param 支店コードと支店名を保持するMap
-	 * @param 支店コードと売上金額を保持するMap
-	 * @return 書き込み可否
-	 * @throws IOException
+	 * @param コードと名前を保持するMap
+	 * @param コードと金額を保持するMap
+	 * @return 読み込み可否
 	 */
-	private static boolean writeFile(String path, String fileName, Map<String, String> branchNames,
-			Map<String, Long> branchSales) throws IOException {
+	private static boolean writeFile(String path, String fileName, Map<String, String> commonNames,
+			Map<String, Long> commonSales) throws IOException {
 		// ※ここに書き込み処理を作成してください。(処理内容3-1)
 		BufferedWriter bw = null;
 		//
@@ -251,9 +293,9 @@ public class CalculateSales {
 			bw = new BufferedWriter(new FileWriter(path + File.separator + fileName));
 
 			// Mapから全てのKey(支店コード)を取得
-			for (String key : branchNames.keySet()) {
+			for (String key : commonNames.keySet()) {
 				// ファイルに書き込む文字列を作成（支店コード・支店名・合計金額）
-				bw.write(key + "," + branchNames.get(key) + "," + branchSales.get(key));
+				bw.write(key + "," + commonNames.get(key) + "," + commonSales.get(key));
 				//改行
 				bw.newLine();
 			}
