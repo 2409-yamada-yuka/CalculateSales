@@ -36,6 +36,9 @@ public class CalculateSales {
 	//04_商品定義の追加の内容
 	private static final String COMMODITY_FILE_NOT_EXIST = "商品定義ファイルが存在しません";
 	private static final String COMMODITY_FILE_INVALID_FORMAT = "商品定義ファイルのフォーマットが不正です";
+	private static final String INVALID_FORMAT = "のフォーマットが不正です";
+	private static final String BRANCH_CODE_INVALID_FORMAT = "の支店コードが不正です";
+	private static final String COMMODITY_CODE_INVALID_FORMAT = "の商品コードが不正です";
 
 	/**
 	 * メインメソッド
@@ -64,14 +67,13 @@ public class CalculateSales {
 
 		//同じメソッドを使用して違うファイルを読み込む
 		// 支店定義ファイル読み込み処理
-		if (!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales, FILE_NOT_EXIST, FILE_INVALID_FORMAT)) {
+		if (!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
 			return;
 		}
 		//04_商品定義の追加の内容
 		//処理内容1-3
 		// 商品定義ファイル読み込み処理
-		if (!readFile(args[0], FILE_NAME_COMMODITY_LST, commodityNames, commoditySales, COMMODITY_FILE_NOT_EXIST,
-				COMMODITY_FILE_INVALID_FORMAT)) {
+		if (!readFile(args[0], FILE_NAME_COMMODITY_LST, commodityNames, commoditySales)) {
 			return;
 		}
 
@@ -132,7 +134,7 @@ public class CalculateSales {
 				//ファイルフォーマットの確認
 				//04_商品定義の追加 2-5内容
 				if (lines.size() != 3) {
-					System.out.println(rcdFiles.get(i).getName() + "のフォーマットが不正です");
+					System.out.println(rcdFiles.get(i).getName() + INVALID_FORMAT);
 					return;
 				}
 
@@ -145,14 +147,14 @@ public class CalculateSales {
 				//Mapに特定のKeyが存在するか確認する
 				//支店コードの有効性をチェック
 				if (!branchSales.containsKey(branchCode)) {
-					System.out.println(rcdFiles.get(i).getName() + "の支店コードが不正です");
+					System.out.println(rcdFiles.get(i).getName() + BRANCH_CODE_INVALID_FORMAT);
 					return;
 				}
 
 				// 商品コードの有効性をチェック
 				//04_商品定義の追加 2-4内容
 				if (!commoditySales.containsKey(commodityCode)) {
-					System.out.println(rcdFiles.get(i).getName() + "の商品コードが不正です");
+					System.out.println(rcdFiles.get(i).getName() + COMMODITY_CODE_INVALID_FORMAT);
 					return;
 				}
 
@@ -219,7 +221,7 @@ public class CalculateSales {
 	 * @return 読み込み可否
 	 */
 	private static boolean readFile(String path, String fileName, Map<String, String> commonNames,
-			Map<String, Long> commonSales, String fileErrorMessage, String formatErrorMessage) {
+			Map<String, Long> commonSales) {
 
 		//引数から見に行くファイルを指定
 
@@ -230,7 +232,7 @@ public class CalculateSales {
 			//エラー処理1の内容
 			//指定された定義ファイルが存在しない場合
 			if (!file.exists()) {
-				System.out.println(fileErrorMessage);
+				System.out.println(getFileNotExistMessage(fileName));
 				return false;
 			}
 
@@ -247,12 +249,12 @@ public class CalculateSales {
 				String[] items = line.split(",");
 
 				//エラー処理1の内容
-				// 少なくともコードと名前2つの要素があるか確認
+				// 少なくとも支店コードと商品コード、名前の3つの要素があるか確認
 				//定義ファイルの仕様が満たされていない場合
 				//if (items.length != 2 || !items[0].matches("\\d{3}")) {
-				if (items.length != 2 || !items[0].matches("^[0-9]{3}$")) {
+				if (items.length != 3 || !items[0].matches("^[0-9]{3}$")) {
 
-					System.out.println(formatErrorMessage);
+					System.out.println(getFormatInvalidMessage(fileName));
 
 				}
 
@@ -278,6 +280,25 @@ public class CalculateSales {
 			}
 		}
 		return true;
+	}
+
+	//エラーメッセージの判定
+	private static String getFileNotExistMessage(String fileName) {
+		if (fileName.equals(FILE_NAME_BRANCH_LST)) {
+			return FILE_NOT_EXIST;
+		} else {
+			//商品定義ファイルのファイルなし
+			return COMMODITY_FILE_NOT_EXIST;
+		}
+	}
+
+	private static String getFormatInvalidMessage(String fileName) {
+		if (fileName.equals(FILE_NAME_BRANCH_LST)) {
+			return FILE_INVALID_FORMAT;
+		} else {
+			//商品定義ファイルのフォーマット不正
+			return COMMODITY_FILE_INVALID_FORMAT;
+		}
 	}
 
 	/**
